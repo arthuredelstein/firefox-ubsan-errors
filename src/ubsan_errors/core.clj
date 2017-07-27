@@ -1,8 +1,12 @@
 (ns ubsan-errors.core
-  (:require [clojure.java.io :as io])
-  (:import [java.io File]))
+  (:require [clojure.java.io :as io]))
 
 (def ^:dynamic *results* "../download_taskcluster_logs/results/")
+
+(defn fmap
+  "Map function f over values of map m."
+  [m f]
+  (into {} (for [[k v] m] [k (f v)])))
 
 (defn file-line-seq
   "Returns a seq of the lines in the file at path."
