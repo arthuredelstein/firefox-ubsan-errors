@@ -47,3 +47,20 @@
        (mapcat file-line-seq)
        (select-runtime-error-lines)
        (map extract-runtime-error)))
+
+(defn print-summary [runtime-errs]
+  (let [;; group by file and line number
+        resf (group-by first runtime-errs)
+        ;; clean up redundant data
+        resfs (fmap resf #(map second %))
+        ;; produce [file:line:col [number representative-err-msg]]
+        resfsr (fmap resfs (juxt count first))]
+    (doseq [[line [c m]] resfsr]
+      (let [line2 (when line
+                    (.replace line
+                              "/home/worker/workspace/build/src/" " "))]
+        (println line2 "\t" c "\t" m)))))
+
+; How to use:
+; (def res (runtime-errors))
+; (binding [*out* summary-file] (print-summary res))
