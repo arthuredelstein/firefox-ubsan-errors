@@ -63,4 +63,5 @@
 
 ; How to use:
 ; (def res (runtime-errors))
+; (def summary-file (io/writer "ubsan-error-summary.txt"))
 ; (binding [*out* summary-file] (print-summary res))
