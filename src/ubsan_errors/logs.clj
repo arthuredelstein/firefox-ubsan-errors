@@ -2,23 +2,21 @@
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]))
 
-(def taskGroupId "cz1GoajhTM29AKwxMsHqSw")
-
 (defn task-group-url
   "A url for listing the task group. Optional
    continuation token (otherwise provide nil)."
-  [continuation-token]
+  [task-group-id continuation-token]
   (str "https://queue.taskcluster.net/v1/task-group/"
-       taskGroupId "/list"
+       task-group-id "/list"
        (if continuation-token
          (str "?continuationToken=" continuation-token)
          "")))
 
 (defn fetch-tasks
   "Fetch all tasks from the task group."
-  []
+  [task-group-id]
   (loop [continuation-token nil tasks '()]
-    (let [url (task-group-url continuation-token)
+    (let [url (task-group-url task-group-id continuation-token)
           raw (:body (http/get url))
           data (json/read-str raw :key-fn keyword)
           tasks+ (concat tasks (data :tasks))
@@ -69,6 +67,6 @@
 
 (defn download-task-logs!
   "Download the log files for all tasks in the tasks group."
-  []
-  (dorun (map download-task-log! (fetch-tasks))))
+  [task-group-id]
+  (dorun (map download-task-log! (fetch-tasks task-group-id))))
 
