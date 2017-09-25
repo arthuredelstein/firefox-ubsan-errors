@@ -57,7 +57,7 @@
         runs-count (count (task-status :runs))
         last-run (dec runs-count)]
     (println task-id task-state)
-    (if (= task-state "exception")
+    (if (#{"exception" "unscheduled"} task-state)
       (println task-state last-run)
       (let [body (or (get-body (task-log-url task-id last-run))
                      (get-body (task-log-url2 task-id last-run)))]
@@ -68,5 +68,6 @@
 (defn download-task-logs!
   "Download the log files for all tasks in the tasks group."
   [task-group-id]
+  (clojure.java.io/make-parents "./logs/any-file.txt")
   (dorun (map download-task-log! (fetch-tasks task-group-id))))
 

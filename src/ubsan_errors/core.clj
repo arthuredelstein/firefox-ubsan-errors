@@ -3,16 +3,6 @@
 
 (def ^:dynamic *results* "./logs/")
 
-(defn fmap
-  "Map function f over values of map m."
-  [m f]
-  (into {} (for [[k v] m] [k (f v)])))
-
-(defn file-line-seq
-  "Returns a seq of the lines in the file at path."
-  [path]
-  (line-seq (io/reader path)))
-
 (defn list-files
   "Get the list of files found in directory at path."
   [path]
@@ -20,6 +10,11 @@
        io/as-file
        .listFiles
        seq))
+
+(defn file-line-seq
+  "Returns a seq of the lines in the file at path."
+  [path]
+  (line-seq (io/reader path)))
 
 (defn select-runtime-error-lines
   "Select lines with the string 'runtime error:'."
@@ -40,29 +35,33 @@
        (second (re-find #"runtime error: (.*?$)" line))))))
 
 (defn runtime-errors
-  "Extract all runtime errors in all the log files."
+  "Extract all runtime errors in all the log files. Returns
+   a map with entries [location [error-message count]]."
   []
   (->> (list-files *results*)
        (mapcat file-line-seq)
        (select-runtime-error-lines)
-       (map extract-runtime-error)))
+       (map extract-runtime-error)
+       (reduce
+        (fn [m [loc err]]
+          (update-in m [loc]
+                     (fn [[e ct]]
+                       (if ct
+                         [e (inc ct)]
+                         [err 1]))))
+        {})))
 
 (defn print-summary
   "Print a table of rows with
    [runtime error location, count, typical error message]"
-  [runtime-errs]
-  (let [;; group by file and line number
-        resf (group-by first runtime-errs)
-        ;; clean up redundant data
-        resfs (fmap resf #(map second %))
-        ;; produce [file:line:col [number representative-err-msg]]
-        resfsr (for [[line mesgs] resfs]
-                 [line (count mesgs) (first mesgs)])]
-    (doseq [[line c m] (reverse (sort-by second resfsr))]
-      (let [line2 (when line
-                    (.replace line
-                              "/home/worker/workspace/build/src/" " "))]
-        (println line2 "\t" c "\t" m)))))
+  [runtime-err-map]
+  (doseq [[line [m c]] runtime-err-map]
+    (let [line2
+          (when line
+            (.replace
+             line
+             "/builds/worker/workspace/build/src/" " "))]
+      (println line2 "\t" c "\t" m))))
 
 (defn save-summary
   "Save a table of rows with
