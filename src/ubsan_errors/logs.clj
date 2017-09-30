@@ -33,9 +33,10 @@
        task-id "/" run
        "/public/logs/live_backing.log"))
 
-(defn task-log-url2 [task-id run]
+(defn task-log-url2
   "A second possible URL for downloading the log for
    the given task with a 'run' index."
+  [task-id run]
   (str "https://queue.taskcluster.net/v1/task/" task-id
        "/runs/" run
        "/artifacts/public/logs/live_backing.log.gz"))
@@ -70,4 +71,3 @@
   [task-group-id]
   (clojure.java.io/make-parents "./logs/any-file.txt")
   (dorun (map download-task-log! (fetch-tasks task-group-id))))
-
