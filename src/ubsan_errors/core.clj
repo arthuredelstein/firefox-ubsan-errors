@@ -1,7 +1,6 @@
 (ns ubsan-errors.core
-  (:require [clojure.java.io :as io]))
-
-(def ^:dynamic *results* "./logs/")
+  (:require [clojure.java.io :as io]
+            [ubsan-errors.logs :as logs]))
 
 (defn list-files
   "Get the list of files found in directory at path."
@@ -37,8 +36,8 @@
 (defn runtime-errors
   "Extract all runtime errors in all the log files. Returns
    a map with entries [location [error-message count]]."
-  []
-  (->> (list-files *results*)
+  [dir]
+  (->> (list-files dir)
        (mapcat file-line-seq)
        (select-runtime-error-lines)
        (map extract-runtime-error)
@@ -49,7 +48,7 @@
                        (if ct
                          [e (inc ct)]
                          [err 1]))))
-        {})))
+        (sorted-map))))
 
 (defn print-summary
   "Print a table of rows with
@@ -66,7 +65,16 @@
 (defn save-summary
   "Save a table of rows with
   [runtime error location, count typical error message]"
-  [runtime-errs]
-  (spit "firefox-ubsan-error-summary.txt"
+  [filename runtime-errs]
+  (spit filename
         (with-out-str
-          (print-summary runtime-errs))))
+          (print-summary runtime-errs)))
+  (println "Wrote" filename))
+
+(defn -main
+  "The main program. Pass the task-group-id."
+  [task-group-id]
+  (let [dir (logs/download-task-logs! task-group-id)]
+    (save-summary
+     (str "firefox-ubsan-errors-" task-group-id ".txt")
+     (runtime-errors dir))))

@@ -51,7 +51,7 @@
 
 (defn download-task-log!
   "Download the log file for a single task."
-  [task]
+  [dir task]
   (let [task-status (task :status)
         task-state (task-status :state)
         task-id (task-status :taskId)
@@ -64,10 +64,15 @@
                      (get-body (task-log-url2 task-id last-run)))]
         (when (nil? body)
           (throw (Exception. "download failed.")))
-        (spit (str "./logs/" task-id) body)))))
+        (spit (str dir "/" task-id) body)))))
 
 (defn download-task-logs!
   "Download the log files for all tasks in the tasks group."
   [task-group-id]
-  (clojure.java.io/make-parents "./logs/any-file.txt")
-  (dorun (map download-task-log! (fetch-tasks task-group-id))))
+  (let [dir (str "logs-" task-group-id)]
+    (clojure.java.io/make-parents
+     (str dir "/any-file.txt"))
+    (dorun (map #(download-task-log! dir %)
+                (fetch-tasks task-group-id)))
+    (println "Downloaded to" dir)
+    dir))

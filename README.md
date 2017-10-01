@@ -4,11 +4,8 @@ A clojure script to extract runtime errors reported by ubsan from Mozilla try se
 
 ## Usage
 
-FIXME
+lein run YOUR_TASK_GROUP_ID
 
 ## License
 
-Copyright © 2017 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+MIT
